@@ -2,13 +2,9 @@ package gospec
 
 import (
 	"testing"
-)
 
-type TestCase[IN any, OUT any] struct {
-	Description    string
-	Input          IN
-	ExpectedOutput OUT
-}
+	th "github.com/jrlangford/gospec/gospectest"
+)
 
 type ID string
 
@@ -32,7 +28,7 @@ func NewIsLegalAdult() *IsLegalAdult {
 	return &s
 }
 
-func (s IsLegalAdult) IsSatisfiedBy(p User) bool {
+func (s *IsLegalAdult) IsSatisfiedBy(p User) bool {
 	return p.age >= s.ageOfMajority
 }
 
@@ -102,7 +98,7 @@ type testInput struct {
 	spec Specification[User]
 }
 
-var userTestCases = []TestCase[testInput, bool]{
+var userTestCases = []th.TestCase[testInput, bool]{
 	{
 		"simple",
 		testInput{
@@ -229,7 +225,7 @@ var userTestCases = []TestCase[testInput, bool]{
 				name: "Bob",
 				age:  26,
 			},
-			NewIsLegalAdult().And(NewIsFlagged().And(NewIsBob())),
+			NewIsLegalAdult().And(NewIsFlagged()).And(NewIsBob()),
 		},
 		true,
 	},
@@ -241,7 +237,7 @@ var userTestCases = []TestCase[testInput, bool]{
 				name: "Alice",
 				age:  12,
 			},
-			NewIsLegalAdult().Or(NewIsFlagged().Or(NewIsBob())),
+			NewIsLegalAdult().Or(NewIsFlagged()).Or(NewIsBob()),
 		},
 		false,
 	},
@@ -259,7 +255,7 @@ var userTestCases = []TestCase[testInput, bool]{
 	},
 }
 
-func TestAnd(t *testing.T) {
+func TestAll(t *testing.T) {
 	for _, tCase := range userTestCases {
 
 		spec := tCase.Input.spec
@@ -275,6 +271,5 @@ func TestAnd(t *testing.T) {
 				specSatisfied,
 			)
 		}
-
 	}
 }
