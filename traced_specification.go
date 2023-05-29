@@ -1,9 +1,7 @@
 package gospec
 
-import "fmt"
-
 type Tracer interface {
-	Append(string)
+	Append(*OpTrace)
 }
 
 type TSpecification[T any] interface {
@@ -55,11 +53,12 @@ func (s *AndTSpecification[T]) IsSatisfiedBy(t T) bool {
 
 	l := s.left.IsSatisfiedBy(t)
 
-	trace := fmt.Sprintf("[left AND right]\n")
-	trace += fmt.Sprintf("left: %s evaluates to %t\n", s.left.GetName(), l)
+	trace := NewOpTraceWithLeft(
+		And,
+		NewExpressionTrace(s.left.GetName(), l),
+	)
 
 	if !l {
-		trace += fmt.Sprintf("false AND X is false through short-circuit\n")
 		s.tracer.Append(trace)
 		return l
 	}
@@ -67,8 +66,7 @@ func (s *AndTSpecification[T]) IsSatisfiedBy(t T) bool {
 	r := s.right.IsSatisfiedBy(t)
 	leftAndRight := l && r
 
-	trace += fmt.Sprintf("right: %s evaluates to %t\n", s.right.GetName(), r)
-	trace += fmt.Sprintf("%t AND %t is %t\n", l, r, leftAndRight)
+	trace.SetRight(NewExpressionTrace(s.right.GetName(), r))
 	s.tracer.Append(trace)
 
 	return leftAndRight
@@ -101,11 +99,12 @@ func (s *OrTSpecification[T]) IsSatisfiedBy(t T) bool {
 
 	l := s.left.IsSatisfiedBy(t)
 
-	trace := fmt.Sprintf("[left OR right]\n")
-	trace += fmt.Sprintf("left: %s evaluates to %t\n", s.left.GetName(), l)
+	trace := NewOpTraceWithLeft(
+		Or,
+		NewExpressionTrace(s.left.GetName(), l),
+	)
 
 	if l {
-		trace += fmt.Sprintf("true OR X is true through short-circuit\n")
 		s.tracer.Append(trace)
 		return l
 	}
@@ -113,8 +112,7 @@ func (s *OrTSpecification[T]) IsSatisfiedBy(t T) bool {
 	r := s.right.IsSatisfiedBy(t)
 	leftOrRight := l || r
 
-	trace += fmt.Sprintf("right: %s evaluates to %t\n", s.right.GetName(), r)
-	trace += fmt.Sprintf("%t OR %t is %t\n", l, r, leftOrRight)
+	trace.SetRight(NewExpressionTrace(s.right.GetName(), r))
 	s.tracer.Append(trace)
 
 	return leftOrRight
@@ -135,14 +133,15 @@ func NewNotTSpecification[T any](single TSpecification[T], t Tracer) *NotTSpecif
 
 func (s *NotTSpecification[T]) IsSatisfiedBy(t T) bool {
 
-	satisfaction := s.single.IsSatisfiedBy(t)
+	l := s.single.IsSatisfiedBy(t)
 
-	trace := fmt.Sprintf("[NOT left]\n")
-	trace += fmt.Sprintf("left: %s evaluates to %t\n", s.single.GetName(), satisfaction)
+	trace := NewOpTraceWithLeft(
+		Not,
+		NewExpressionTrace(s.single.GetName(), l),
+	)
 
-	not := !satisfaction
+	not := !l
 
-	trace += fmt.Sprintf("NOT %t is %t\n", satisfaction, not)
 	s.tracer.Append(trace)
 
 	return not

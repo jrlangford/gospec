@@ -1,11 +1,10 @@
 package gospec_test
 
 import (
-	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/jrlangford/gospec"
+	g "github.com/jrlangford/gospec"
 	th "github.com/jrlangford/gospec/gospectest"
 )
 
@@ -123,11 +122,11 @@ type testInput struct {
 }
 
 type testOutput struct {
-	result        bool
-	tracePrefixes []string
+	result   bool
+	opLabels []gospec.OperatorLabel
 }
 
-var tracer = th.NewSpecTracer()
+var tracer = th.NewSpecTracer[*gospec.OpTrace]()
 
 var userTestCases = []th.TestCase[testInput, testOutput]{
 	{
@@ -140,7 +139,7 @@ var userTestCases = []th.TestCase[testInput, testOutput]{
 		},
 		testOutput{
 			true,
-			[]string{},
+			[]g.OperatorLabel{},
 		},
 	},
 	{
@@ -153,7 +152,7 @@ var userTestCases = []th.TestCase[testInput, testOutput]{
 		},
 		testOutput{
 			true,
-			[]string{"[NOT left]"},
+			[]g.OperatorLabel{g.Not},
 		},
 	},
 	{
@@ -167,7 +166,7 @@ var userTestCases = []th.TestCase[testInput, testOutput]{
 		},
 		testOutput{
 			true,
-			[]string{"[left AND right]"},
+			[]g.OperatorLabel{g.And},
 		},
 	},
 	{
@@ -181,9 +180,10 @@ var userTestCases = []th.TestCase[testInput, testOutput]{
 		},
 		testOutput{
 			false,
-			[]string{"[left AND right]"},
+			[]g.OperatorLabel{g.And},
 		},
 	},
+
 	{
 		"and: left is false, right is true",
 		testInput{
@@ -195,9 +195,10 @@ var userTestCases = []th.TestCase[testInput, testOutput]{
 		},
 		testOutput{
 			false,
-			[]string{"[left AND right]"},
+			[]g.OperatorLabel{g.And},
 		},
 	},
+
 	{
 		"and: left is false, right is false",
 		testInput{
@@ -209,9 +210,10 @@ var userTestCases = []th.TestCase[testInput, testOutput]{
 		},
 		testOutput{
 			false,
-			[]string{"[left AND right]"},
+			[]g.OperatorLabel{g.And},
 		},
 	},
+
 	{
 		"or: left is true, right is true",
 		testInput{
@@ -223,9 +225,10 @@ var userTestCases = []th.TestCase[testInput, testOutput]{
 		},
 		testOutput{
 			true,
-			[]string{"[left OR right]"},
+			[]g.OperatorLabel{g.Or},
 		},
 	},
+
 	{
 		"or: left is true, right is false",
 		testInput{
@@ -237,9 +240,10 @@ var userTestCases = []th.TestCase[testInput, testOutput]{
 		},
 		testOutput{
 			true,
-			[]string{"[left OR right]"},
+			[]g.OperatorLabel{g.Or},
 		},
 	},
+
 	{
 		"or: left is false, right is true",
 		testInput{
@@ -251,9 +255,10 @@ var userTestCases = []th.TestCase[testInput, testOutput]{
 		},
 		testOutput{
 			true,
-			[]string{"[left OR right]"},
+			[]g.OperatorLabel{g.Or},
 		},
 	},
+
 	{
 		"or: left is false, right is false",
 		testInput{
@@ -265,9 +270,10 @@ var userTestCases = []th.TestCase[testInput, testOutput]{
 		},
 		testOutput{
 			false,
-			[]string{"[left OR right]"},
+			[]g.OperatorLabel{g.Or},
 		},
 	},
+
 	{
 		"not chain",
 		testInput{
@@ -278,9 +284,10 @@ var userTestCases = []th.TestCase[testInput, testOutput]{
 		},
 		testOutput{
 			true,
-			[]string{"[NOT left]", "[NOT left]"},
+			[]g.OperatorLabel{g.Not, g.Not},
 		},
 	},
+
 	{
 		"and chain",
 		testInput{
@@ -293,9 +300,10 @@ var userTestCases = []th.TestCase[testInput, testOutput]{
 		},
 		testOutput{
 			true,
-			[]string{"[left AND right]", "[left AND right]"},
+			[]g.OperatorLabel{g.And, g.And},
 		},
 	},
+
 	{
 		"or chain",
 		testInput{
@@ -308,9 +316,10 @@ var userTestCases = []th.TestCase[testInput, testOutput]{
 		},
 		testOutput{
 			false,
-			[]string{"[left OR right]", "[left OR right]"},
+			[]g.OperatorLabel{g.Or, g.Or},
 		},
 	},
+
 	{
 		"composite specification",
 		testInput{
@@ -323,7 +332,7 @@ var userTestCases = []th.TestCase[testInput, testOutput]{
 		},
 		testOutput{
 			true,
-			[]string{"[NOT left]", "[left OR right]", "[left OR right]"},
+			[]g.OperatorLabel{g.Not, g.Or, g.Or},
 		},
 	},
 }
@@ -346,10 +355,10 @@ func TestAnd(t *testing.T) {
 			)
 		}
 
-		expectedPrefixes := tCase.ExpectedOutput.tracePrefixes
+		expectedLabels := tCase.ExpectedOutput.opLabels
 
 		tracerEntryLen := tracer.Len()
-		expectedTraceLen := len(expectedPrefixes)
+		expectedTraceLen := len(expectedLabels)
 
 		if tracerEntryLen != expectedTraceLen {
 			t.Errorf(
@@ -361,18 +370,29 @@ func TestAnd(t *testing.T) {
 		}
 
 		for i := 0; i < expectedTraceLen; i++ {
-			expectedPrefix := expectedPrefixes[i]
+			expectedLabel := expectedLabels[i]
 			trace := tracer.Get(i)
+			traceLabel := trace.GetLabel()
 
-			if !strings.HasPrefix(trace, expectedPrefix) {
+			if traceLabel != expectedLabel {
 				t.Errorf(
 					"\nDescription: %s\nExpected: %v\nGot: %v\n",
 					tCase.Description,
-					expectedPrefix,
-					fmt.Sprintf("%.20s", trace),
+					expectedLabel,
+					traceLabel,
 				)
 			}
 		}
+
+		//fmt.Println(tCase.Description)
+		//for i := 0; i < tracer.Len(); i++ {
+		//	s, err := tracer.Get(i).Explain()
+		//	if err != nil {
+		//		fmt.Println(err)
+		//		continue
+		//	}
+		//	fmt.Println(s)
+		//}
 
 		tracer.Clear()
 	}
