@@ -384,16 +384,6 @@ func TestAnd(t *testing.T) {
 			}
 		}
 
-		//fmt.Println(tCase.Description)
-		//for i := 0; i < tracer.Len(); i++ {
-		//	s, err := tracer.Get(i).Explain()
-		//	if err != nil {
-		//		fmt.Println(err)
-		//		continue
-		//	}
-		//	fmt.Println(s)
-		//}
-
 		tracer.Clear()
 	}
 
