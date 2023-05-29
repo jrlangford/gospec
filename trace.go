@@ -53,14 +53,14 @@ func (o *OpTrace) Explain() (string, error) {
 		return "", errors.New("Received nil left.")
 	}
 
-	s := fmt.Sprintf("[left %s right]\n", o.opLabel)
-
 	switch o.opLabel {
 	case And:
+		s := fmt.Sprintf("[left %s right]", o.opLabel)
+
 		leftVal := o.left.ExpressionValue
-		s += fmt.Sprintf("left: %s evaluates to %t\n", o.left.ExpressionName, leftVal)
+		s += fmt.Sprintf(" > left: %s evaluates to %t", o.left.ExpressionName, leftVal)
 		if !leftVal {
-			s += fmt.Sprintf("false AND X is false through short-circuit\n")
+			s += fmt.Sprintf(" > false AND X is false through short-circuit")
 			return s, nil
 		}
 
@@ -69,17 +69,19 @@ func (o *OpTrace) Explain() (string, error) {
 		}
 
 		rightVal := o.right.ExpressionValue
-		s += fmt.Sprintf("right: %s evaluates to %t\n", o.right.ExpressionName, rightVal)
+		s += fmt.Sprintf(" > right: %s evaluates to %t", o.right.ExpressionName, rightVal)
 
 		result := leftVal && rightVal
 
-		s += fmt.Sprintf("%t AND %t is %t\n", leftVal, rightVal, result)
+		s += fmt.Sprintf(" > %t AND %t is %t", leftVal, rightVal, result)
 		return s, nil
 	case Or:
+		s := fmt.Sprintf("[left %s right]", o.opLabel)
+
 		leftVal := o.left.ExpressionValue
-		s += fmt.Sprintf("left: %s evaluates to %t\n", o.left.ExpressionName, leftVal)
+		s += fmt.Sprintf(" > left: %s evaluates to %t", o.left.ExpressionName, leftVal)
 		if leftVal {
-			s += fmt.Sprintf("true OR X is true through short-circuit\n")
+			s += fmt.Sprintf(" > true OR X is true through short-circuit")
 			return s, nil
 		}
 
@@ -88,19 +90,21 @@ func (o *OpTrace) Explain() (string, error) {
 		}
 
 		rightVal := o.right.ExpressionValue
-		s += fmt.Sprintf("right: %s evaluates to %t\n", o.right.ExpressionName, rightVal)
+		s += fmt.Sprintf(" > right: %s evaluates to %t", o.right.ExpressionName, rightVal)
 
 		result := leftVal || rightVal
 
-		s += fmt.Sprintf("%t OR %t is %t\n", leftVal, rightVal, result)
+		s += fmt.Sprintf(" > %t OR %t is %t", leftVal, rightVal, result)
 		return s, nil
 	case Not:
+		s := fmt.Sprintf("[%s left]", o.opLabel)
+
 		leftVal := o.left.ExpressionValue
-		s += fmt.Sprintf("left: %s evaluates to %t\n", o.left.ExpressionName, leftVal)
+		s += fmt.Sprintf(" > left: %s evaluates to %t", o.left.ExpressionName, leftVal)
 
 		result := !leftVal
 
-		s += fmt.Sprintf("NOT %t is %t\n", leftVal, result)
+		s += fmt.Sprintf(" > NOT %t is %t", leftVal, result)
 		return s, nil
 	}
 	return "", errors.New("Unidentified operation.")
