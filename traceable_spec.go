@@ -13,25 +13,25 @@ type TSpecification[T any] interface {
 }
 
 type BaseTSpecification[T any] struct {
-	TSpecification[T]
-	tracer Tracer
+	childSpec TSpecification[T]
+	tracer    Tracer
 }
 
 func (c *BaseTSpecification[T]) Init(s TSpecification[T], t Tracer) {
-	c.TSpecification = s
+	c.childSpec = s
 	c.tracer = t
 }
 
 func (c *BaseTSpecification[T]) And(s TSpecification[T]) TSpecification[T] {
-	return NewAndTSpecification[T](c.TSpecification, s, c.tracer)
+	return NewAndTSpecification[T](c.childSpec, s, c.tracer)
 }
 
 func (c *BaseTSpecification[T]) Or(s TSpecification[T]) TSpecification[T] {
-	return NewOrTSpecification[T](c.TSpecification, s, c.tracer)
+	return NewOrTSpecification[T](c.childSpec, s, c.tracer)
 }
 
 func (c *BaseTSpecification[T]) Not() TSpecification[T] {
-	return NewNotTSpecification[T](c.TSpecification, c.tracer)
+	return NewNotTSpecification[T](c.childSpec, c.tracer)
 }
 
 type AndTSpecification[T any] struct {

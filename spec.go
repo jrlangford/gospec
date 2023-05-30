@@ -8,23 +8,23 @@ type Specification[T any] interface {
 }
 
 type BaseSpecification[T any] struct {
-	Specification[T]
+	childSpec Specification[T]
 }
 
 func (c *BaseSpecification[T]) Init(s Specification[T]) {
-	c.Specification = s
+	c.childSpec = s
 }
 
 func (c *BaseSpecification[T]) And(s Specification[T]) Specification[T] {
-	return NewAndSpecification[T](c.Specification, s)
+	return NewAndSpecification[T](c.childSpec, s)
 }
 
 func (c *BaseSpecification[T]) Or(s Specification[T]) Specification[T] {
-	return NewOrSpecification[T](c.Specification, s)
+	return NewOrSpecification[T](c.childSpec, s)
 }
 
 func (c *BaseSpecification[T]) Not() Specification[T] {
-	return NewNotSpecification[T](c.Specification)
+	return NewNotSpecification[T](c.childSpec)
 }
 
 type AndSpecification[T any] struct {
